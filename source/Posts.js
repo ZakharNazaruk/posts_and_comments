@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from "react-native";
-import Comments from "./Comments";
 
-export default function Posts() {
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
+
+export default function Posts({ navigateToComments }) {
   const [posts, setPosts] = useState([]);
-  const [expandedPostId, setExpandedPostId] = useState(null);
-  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [endReached, setEndReached] = useState(false);
 
@@ -14,19 +12,17 @@ export default function Posts() {
   }, []);
 
   const fetchData = async () => {
-    if (loading || endReached) return; // Предотвращаем повторные запросы
+    if (loading || endReached) return;
     setLoading(true);
     try {
       const response = await fetch(
-        `https://jsonplaceholder.typicode.com/posts?_page=${page}&_limit=10`
+        `https://jsonplaceholder.typicode.com/posts?_page=1&_limit=10`
       );
       const data = await response.json();
       if (data.length === 0) {
-        // Достигли конца списка
         setEndReached(true);
       } else {
-        setPosts([...posts, ...data]); // Добавляем загруженные посты к уже имеющимся
-        setPage(page + 1); // Увеличиваем номер страницы для следующей загрузки
+        setPosts(data);
       }
     } catch (error) {
       console.error("Error fetching posts:", error);
@@ -35,7 +31,7 @@ export default function Posts() {
   };
 
   const handleCommentsButtonClick = (postId) => {
-    setExpandedPostId((prevPostId) => (prevPostId === postId ? null : postId));
+    navigateToComments(postId); 
   };
 
   const renderFooter = () => {
@@ -64,12 +60,9 @@ export default function Posts() {
           >
             <Text>Comments</Text>
           </TouchableOpacity>
-          {expandedPostId === item.id && <Comments postId={item.id} />}
         </View>
       )}
       keyExtractor={(item) => item.id.toString()}
-      onEndReached={fetchData}
-      onEndReachedThreshold={0.1} 
       ListFooterComponent={renderFooter}
     />
   );
@@ -82,7 +75,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     marginTop: 20,
-    marginHorizontal:20
+    marginHorizontal: 20,
   },
   title: {
     fontSize: 25,
